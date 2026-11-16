@@ -9,7 +9,7 @@ ROOT = Path(__file__).parent.parent
 def run_game(args, stdin="", env_extra=None):
     env = {**os.environ, **(env_extra or {})}
     return subprocess.run(
-        [sys.executable, "main.py", *args],
+        [sys.executable, "-m", "rps", *args],
         input=stdin,
         capture_output=True,
         text=True,

@@ -1,6 +1,6 @@
 import pytest
 
-from graph import RuleGraph, build_rule_graph
+from src.rps.graph import RuleGraph, build_rule_graph
 
 
 def test_add_move_creates_empty_node():

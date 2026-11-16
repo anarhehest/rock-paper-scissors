@@ -1,6 +1,6 @@
 import pytest
 
-from rules import list_available_rules, load_rules
+from src.rps.rules import list_available_rules, load_rules
 
 
 def test_list_available_rules_returns_sorted_names():

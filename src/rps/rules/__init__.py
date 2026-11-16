@@ -1,7 +1,7 @@
 import tomllib
 from importlib.resources import files
 
-_PACKAGE = "rules"
+_PACKAGE = __package__
 _EXT = ".toml"
 
 
