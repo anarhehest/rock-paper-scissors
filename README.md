@@ -41,7 +41,7 @@ Move names must be lowercase. To add a set, drop a new `.toml` file in that dire
 ## Development
 
 ```bash
-poetry run pytest -v      # 55 tests
+poetry run pytest -v
 ```
 
 ## Requirements
