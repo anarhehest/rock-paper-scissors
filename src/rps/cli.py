@@ -60,7 +60,7 @@ def _build_bot(
     name = args.bot or "random"
     if name not in BUILTIN_BOTS:
         parser.error(
-            f"unknown bot: {name!r}.available: {', '.join(sorted(BUILTIN_BOTS))}"
+            f"unknown bot: {name!r}. available: {', '.join(sorted(BUILTIN_BOTS))}"
         )
     return BUILTIN_BOTS[name]
 
