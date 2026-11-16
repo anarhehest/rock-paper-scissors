@@ -1,0 +1,32 @@
+[project]
+name = "rock-paper-scissors"
+version = "0.1.0"
+description = "Rock-Paper-Scissors CLI with pluggable rule sets"
+authors = [
+    {name = "anarhehest",email = "drevv5@icloud.com"}
+]
+requires-python = ">=3.13,<4.0"
+dependencies = [
+    "returns (>=0.30.0,<0.31.0)"
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+packages = [
+    { include = "rules" },
+    { include = "main.py" },
+    { include = "graph.py" },
+]
+
+[dependency-groups]
+dev = [
+    "ruff (>=0.15.16,<0.16.0)",
+    "pytest (>=9.2.0,<10.0.0)"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
