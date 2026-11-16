@@ -25,6 +25,7 @@ RULES                 rule set name (see --help for available sets)
 --bot NAME            bot to play against (default: random)
 --bot-file PATH       load a custom bot from a Python file
 --no-color            disable colored output (also honors NO_COLOR)
+--pvp                 two-player hot-seat mode
 ```
 
 In-game: enter a move, or `q` / `quit` / `exit` to leave.

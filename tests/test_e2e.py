@@ -164,3 +164,44 @@ def test_custom_bot_file_missing(tmp_path):
     r = run_game(["classic", "--bot-file", str(tmp_path / "nope.py")])
     assert r.returncode == 2
     assert "not found" in r.stderr
+
+
+def test_pvp_runs():
+    r = run_game(["classic", "--pvp"], stdin="rock\nscissors\nq\n")
+    assert r.returncode == 0
+    assert "Player 1:" in r.stdout
+    assert "Player 2:" in r.stdout
+
+
+def test_pvp_player1_wins():
+    r = run_game(["classic", "--pvp"], stdin="rock\nscissors\nq\n")
+    assert "Player 1 wins!" in r.stdout
+
+
+def test_pvp_player2_wins():
+    r = run_game(["classic", "--pvp"], stdin="rock\npaper\nq\n")
+    assert "Player 2 wins!" in r.stdout
+
+
+def test_pvp_draw():
+    r = run_game(["classic", "--pvp"], stdin="rock\nrock\nq\n")
+    assert "Draw" in r.stdout
+
+
+def test_pvp_quit_on_first_move():
+    r = run_game(["classic", "--pvp"], stdin="q\n")
+    assert r.returncode == 0
+
+
+def test_pvp_with_bot_rejected():
+    r = run_game(["classic", "--pvp", "--bot", "random"])
+    assert r.returncode == 2
+
+
+def test_pvp_match_completes():
+    r = run_game(
+        ["classic", "--pvp", "--first-to", "2"],
+        stdin="rock\nscissors\n" * 10,
+    )
+    assert r.returncode == 0
+    assert "wins the match!" in r.stdout
