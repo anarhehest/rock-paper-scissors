@@ -1,5 +1,6 @@
 import argparse
 import sys
+from pathlib import Path
 
 from returns.result import Failure, Success
 
@@ -7,6 +8,7 @@ from rps.colors import Style, supports_color
 from rps.graph import build_rule_graph
 from rps.rules import list_available_rules, load_rules
 from rps.game import Score, parse_command, play_round
+from rps.bots import BUILTIN_BOTS, load_bot_file
 
 
 def main():
@@ -31,6 +33,18 @@ def main():
         help="Play until either side wins N rounds (default: 1)",
     )
     parser.add_argument(
+        "--bot",
+        default="random",
+        metavar="NAME",
+        help=f"Bot to play against: {', '.join(sorted(BUILTIN_BOTS))} (default: random)",
+    )
+    parser.add_argument(
+        "--bot-file",
+        type=Path,
+        metavar="PATH",
+        help="Load a custom bot from a Python file (overrides --bot)",
+    )
+    parser.add_argument(
         "--no-color",
         action="store_true",
         help="Disable colored output (also respects NO_COLOR env var)",
@@ -40,6 +54,18 @@ def main():
 
     if args.first_to < 1:
         parser.error("--first-to must be at least 1")
+
+    if args.bot_file:
+        try:
+            bot = load_bot_file(args.bot_file)
+        except ValueError as e:
+            parser.error(str(e))
+    elif args.bot in BUILTIN_BOTS:
+        bot = BUILTIN_BOTS[args.bot]
+    else:
+        parser.error(
+            f"unknown bot: {args.bot!r}. available: {', '.join(sorted(BUILTIN_BOTS))}"
+        )
 
     style = Style(enabled=supports_color() and not args.no_color)
 
@@ -63,6 +89,7 @@ def main():
     }
 
     score = Score()
+    history: list[tuple[str, str]] = []
     match_mode = args.first_to > 1
     prompt = style.cyan("Your move: ")
 
@@ -78,7 +105,8 @@ def main():
                     break
 
                 case Success(move):
-                    user, comp, result = play_round(rule_graph, move)
+                    user, comp, result = play_round(rule_graph, move, bot, history)
+                    history.append((move, comp))
                     score.record(result)
 
                     print(f"Computer's move: {comp}")

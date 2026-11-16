@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-from typing import Tuple, Set, Optional, Literal
+from typing import Tuple, Set, Optional, Literal, Sequence
 
 from returns.result import Failure, Result, Success
 
 from rps.graph import RuleGraph
+from rps.bots import Bot, Round
 
 
 def parse_command(
@@ -30,9 +31,14 @@ def resolve(
 
 
 def play_round(
-    rule_graph: RuleGraph, user: str
+    rule_graph: RuleGraph,
+    user: str,
+    bot: Bot,
+    history: Sequence[Round],
 ) -> Tuple[str, str, Literal["draw", "win", "lose"]]:
-    comp = rule_graph.get_random_move()
+    comp = bot.choose(rule_graph, history)
+    if comp not in rule_graph.all_moves():
+        raise ValueError(f"Bot {bot.name!r} returned invalid move: {comp!r}")
     return user, comp, resolve(user, comp, rule_graph)
 
 

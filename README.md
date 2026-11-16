@@ -14,6 +14,7 @@ poetry install
 poetry run rps classic
 poetry run rps startrek
 poetry run rps classic --first-to 5
+poetry run rps classic --bot beat-last
 ```
 
 ## Options
@@ -21,6 +22,8 @@ poetry run rps classic --first-to 5
 ```
 RULES                 rule set name (see --help for available sets)
 --first-to N          play until either side wins N rounds (default: 1)
+--bot NAME            bot to play against (default: random)
+--bot-file PATH       load a custom bot from a Python file
 --no-color            disable colored output (also honors NO_COLOR)
 ```
 

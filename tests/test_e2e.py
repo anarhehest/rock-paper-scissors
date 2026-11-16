@@ -129,3 +129,38 @@ def test_no_color_env_disables_ansi():
         env_extra={"NO_COLOR": "1", "FORCE_COLOR": "1"},
     )
     assert "\033[" not in r.stdout
+
+def test_bot_flag_accepts_builtin():
+    r = run_game(["classic", "--bot", "beat-last"], stdin="rock\nrock\nq\n")
+    assert r.returncode == 0
+    assert "Computer's move:" in r.stdout
+
+
+def test_bot_flag_rejects_unknown():
+    r = run_game(["classic", "--bot", "nope"])
+    assert r.returncode == 2
+    assert "unknown bot" in r.stderr
+
+
+def test_custom_bot_file_is_used(tmp_path):
+    bot_file = tmp_path / "always_rock.py"
+    bot_file.write_text(
+        "class AlwaysRock:\n"
+        "    name = 'always-rock'\n"
+        "    def choose(self, rule_graph, history):\n"
+        "        return 'rock'\n"
+        "BOT = AlwaysRock()\n"
+    )
+    r = run_game(
+        ["classic", "--bot-file", str(bot_file)],
+        stdin="paper\nq\n",
+    )
+    assert r.returncode == 0
+    assert "Computer's move: rock" in r.stdout
+    assert "User wins!" in r.stdout
+
+
+def test_custom_bot_file_missing(tmp_path):
+    r = run_game(["classic", "--bot-file", str(tmp_path / "nope.py")])
+    assert r.returncode == 2
+    assert "not found" in r.stderr
