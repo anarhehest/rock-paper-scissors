@@ -39,10 +39,10 @@ def test_invalid_move_prints_hint():
 def test_play_round_prints_result():
     r = run_game(["classic"], stdin="rock\nq\n")
     assert r.returncode == 0
-    assert "Computer's move:" in r.stdout
-    assert any(s in r.stdout for s in ["Draw", "User wins!", "User loses!"]), (
-        f"unexpected output: {r.stdout!r}"
-    )
+    assert "Computer:" in r.stdout
+    assert any(
+        s in r.stdout for s in ["Draw", "User wins!", "Computer wins!"]
+    ), f"unexpected output: {r.stdout!r}"
 
 
 def test_case_insensitive_input():
@@ -134,7 +134,7 @@ def test_no_color_env_disables_ansi():
 def test_bot_flag_accepts_builtin():
     r = run_game(["classic", "--bot", "beat-last"], stdin="rock\nrock\nq\n")
     assert r.returncode == 0
-    assert "Computer's move:" in r.stdout
+    assert "Computer:" in r.stdout
 
 
 def test_bot_flag_rejects_unknown():
@@ -156,8 +156,8 @@ def test_custom_bot_file_is_used(tmp_path):
         ["classic", "--bot-file", str(bot_file)],
         stdin="paper\nq\n",
     )
-    assert r.returncode == 0
-    assert "Computer's move: rock" in r.stdout
+    assert r.returncode == 0, r.stderr
+    assert "Computer: rock" in r.stdout
     assert "User wins!" in r.stdout
 
 
