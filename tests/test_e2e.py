@@ -40,9 +40,9 @@ def test_play_round_prints_result():
     r = run_game(["classic"], stdin="rock\nq\n")
     assert r.returncode == 0
     assert "Computer:" in r.stdout
-    assert any(
-        s in r.stdout for s in ["Draw", "User wins!", "Computer wins!"]
-    ), f"unexpected output: {r.stdout!r}"
+    assert any(s in r.stdout for s in ["Draw", "User wins!", "Computer wins!"]), (
+        f"unexpected output: {r.stdout!r}"
+    )
 
 
 def test_case_insensitive_input():
@@ -206,3 +206,23 @@ def test_pvp_match_completes():
     )
     assert r.returncode == 0
     assert "wins the match!" in r.stdout
+
+
+def test_seed_makes_pve_reproducible():
+    stdin = "rock\npaper\nscissors\nrock\nq\n"
+    r1 = run_game(["classic", "--seed", "42"], stdin=stdin)
+    r2 = run_game(["classic", "--seed", "42"], stdin=stdin)
+    assert r1.returncode == 0, r1.stderr
+    assert r2.returncode == 0, r2.stderr
+    assert r1.stdout == r2.stdout
+
+
+def test_seed_rejects_non_int():
+    r = run_game(["classic", "--seed", "abc"])
+    assert r.returncode == 2
+
+
+def test_seed_accepted_in_pvp():
+    r = run_game(["classic", "--pvp", "--seed", "42"], stdin="rock\nscissors\nq\n")
+    assert r.returncode == 0
+    assert "Player 1 wins!" in r.stdout

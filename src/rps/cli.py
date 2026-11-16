@@ -1,9 +1,10 @@
 import argparse
 import sys
+import random
 from pathlib import Path
 from typing import Optional
 
-from rps.bots import BUILTIN_BOTS, Bot, load_bot_file
+from rps.bots import BUILTIN_BOTS, Bot, load_bot_file, make_bot
 from rps.colors import Style, supports_color
 from rps.game import validate_moves
 from rps.graph import build_rule_graph
@@ -29,6 +30,13 @@ def _build_parser(possible_rules: list[str]) -> argparse.ArgumentParser:
         action="store_true",
         help="Disable colored output (also respects NO_COLOR env var)",
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Seed for reproducible runs (no effect in --pvp)",
+    )
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--pvp", action="store_true", help="Two-player hot-seat mode")
     mode.add_argument(
@@ -48,7 +56,7 @@ def _build_parser(possible_rules: list[str]) -> argparse.ArgumentParser:
 
 
 def _build_bot(
-    parser: argparse.ArgumentParser, args: argparse.Namespace
+    parser: argparse.ArgumentParser, args: argparse.Namespace, rng: random.Random
 ) -> Optional[Bot]:
     if args.pvp:
         return None
@@ -58,11 +66,12 @@ def _build_bot(
         except ValueError as e:
             parser.error(str(e))
     name = args.bot or "random"
-    if name not in BUILTIN_BOTS:
+    try:
+        return make_bot(name, rng)
+    except KeyError:
         parser.error(
             f"unknown bot: {name!r}. available: {', '.join(sorted(BUILTIN_BOTS))}"
         )
-    return BUILTIN_BOTS[name]
 
 
 def main() -> None:
@@ -74,10 +83,11 @@ def main() -> None:
         parser.error("--first-to must be at least 1")
 
     style = Style(enabled=supports_color() and not args.no_color)
-    bot = _build_bot(parser, args)
 
-    rule_graph = build_rule_graph(load_rules(args.rules))
+    rng = random.Random(args.seed)
+    rule_graph = build_rule_graph(load_rules(args.rules), rng=rng)
     validate_moves(rule_graph.all_moves(), args.rules)
+    bot = _build_bot(parser, args, rng)
 
     try:
         if args.pvp:

@@ -1,6 +1,9 @@
 import pytest
+import random
 
 from src.rps.graph import RuleGraph, build_rule_graph
+
+CLASSIC = {"rock": ["scissors"], "paper": ["rock"], "scissors": ["paper"]}
 
 
 def test_add_move_creates_empty_node():
@@ -79,3 +82,19 @@ def test_build_rule_graph_empty():
 def test_build_rule_graph_rejects_self_loop():
     with pytest.raises(ValueError, match="cannot beat itself"):
         build_rule_graph({"rock": ["rock"]})
+
+
+def test_rule_graph_with_seed_is_deterministic():
+    g1 = build_rule_graph(CLASSIC, rng=random.Random(42))
+    g2 = build_rule_graph(CLASSIC, rng=random.Random(42))
+    seq1 = [g1.get_random_move() for _ in range(10)]
+    seq2 = [g2.get_random_move() for _ in range(10)]
+    assert seq1 == seq2
+
+
+def test_rule_graph_different_seeds_differ():
+    g1 = build_rule_graph(CLASSIC, rng=random.Random(1))
+    g2 = build_rule_graph(CLASSIC, rng=random.Random(2))
+    seq1 = [g1.get_random_move() for _ in range(20)]
+    seq2 = [g2.get_random_move() for _ in range(20)]
+    assert seq1 != seq2

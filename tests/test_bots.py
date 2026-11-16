@@ -1,6 +1,7 @@
+import random
 import pytest
 
-from rps.bots import BUILTIN_BOTS, BeatLastBot, RandomBot, load_bot_file
+from rps.bots import BUILTIN_BOTS, BeatLastBot, RandomBot, load_bot_file, make_bot
 from rps.graph import build_rule_graph
 
 CLASSIC = {"rock": ["scissors"], "paper": ["rock"], "scissors": ["paper"]}
@@ -64,3 +65,25 @@ def test_load_bot_file_bad_bot(tmp_path):
 def test_load_bot_file_not_found(tmp_path):
     with pytest.raises(ValueError, match="not found"):
         load_bot_file(tmp_path / "nope.py")
+
+
+def test_make_bot_returns_registered():
+    rng = random.Random(42)
+    assert make_bot("random", rng).name == "random"
+    assert make_bot("beat-last", rng).name == "beat-last"
+
+
+def test_make_bot_unknown_raises():
+    with pytest.raises(KeyError):
+        make_bot("nope", random.Random(42))
+
+
+def test_beat_last_with_seed_is_deterministic():
+    g1 = build_rule_graph(CLASSIC, rng=random.Random(42))
+    g2 = build_rule_graph(CLASSIC, rng=random.Random(42))
+    b1 = BeatLastBot(rng=random.Random(42))
+    b2 = BeatLastBot(rng=random.Random(42))
+    history = [("rock", "paper")]
+    seq1 = [b1.choose(g1, history) for _ in range(10)]
+    seq2 = [b2.choose(g2, history) for _ in range(10)]
+    assert seq1 == seq2

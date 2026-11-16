@@ -1,11 +1,12 @@
 import random
 from collections import defaultdict
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Optional
 
 
 class RuleGraph:
-    def __init__(self) -> None:
+    def __init__(self, rng: Optional[random.Random] = None) -> None:
         self.graph: Dict[str, Set[str]] = defaultdict(set)
+        self._rng = rng if rng is not None else random.Random()
 
     def add_move(self, move: str) -> None:
         self.graph.setdefault(move, set())
@@ -29,14 +30,14 @@ class RuleGraph:
     def get_random_move(self) -> str:
         if not self.graph:
             raise ValueError("Rule graph is empty: no moves to choose from")
-        return random.choice(list(self.graph.keys()))
+        return self._rng.choice(list(self.graph.keys()))
 
     def __repr__(self) -> str:
         return f"RuleGraph:({dict(self.graph)!r})"
 
 
-def build_rule_graph(rules_dict: Dict[str, List[str]]) -> RuleGraph:
-    graph = RuleGraph()
+def build_rule_graph(rules_dict: Dict[str, List[str]], rng: Optional[random.Random] = None) -> RuleGraph:
+    graph = RuleGraph(rng=rng)
     for winner, losers in rules_dict.items():
         for loser in losers:
             graph.add_rule(winner, loser)
