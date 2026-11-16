@@ -7,31 +7,29 @@ from typing import Protocol, Sequence
 
 from rps.graph import RuleGraph
 
-Round = tuple[str, str]
 
 class Bot(Protocol):
     name: str
 
-    def choose(self, rule_graph: RuleGraph, history: Sequence[Round]) -> str:
-        ...
+    def choose(self, rule_graph: RuleGraph, history: Sequence["Round"]) -> str: ...
+
 
 class RandomBot:
     name = "random"
 
-    def choose(self, rule_graph: RuleGraph, history: Sequence[Round]) -> str:
+    def choose(self, rule_graph: RuleGraph, history: Sequence["Round"]) -> str:
         return rule_graph.get_random_move()
 
 
 class BeatLastBot:
     name = "beat-last"
 
-    def choose(self, rule_graph: RuleGraph, history: Sequence[Round]) -> str:
+    def choose(self, rule_graph: RuleGraph, history: Sequence["Round"]) -> str:
         if not history:
             return rule_graph.get_random_move()
         last_user = history[-1][0]
         winners = [
-            m for m in rule_graph.all_moves()
-            if rule_graph.does_beat(m, last_user)
+            m for m in rule_graph.all_moves() if rule_graph.does_beat(m, last_user)
         ]
         return random.choice(winners) if winners else rule_graph.get_random_move()
 

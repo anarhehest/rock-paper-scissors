@@ -130,6 +130,7 @@ def test_no_color_env_disables_ansi():
     )
     assert "\033[" not in r.stdout
 
+
 def test_bot_flag_accepts_builtin():
     r = run_game(["classic", "--bot", "beat-last"], stdin="rock\nrock\nq\n")
     assert r.returncode == 0

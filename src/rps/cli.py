@@ -1,45 +1,17 @@
 import argparse
 import sys
-from getpass import getpass
 from pathlib import Path
-from typing import Optional, Set
+from typing import Optional
 
-from returns.result import Failure, Success
-
-from rps.bots import BUILTIN_BOTS, Bot, Round, load_bot_file
+from rps.bots import BUILTIN_BOTS, Bot, load_bot_file
 from rps.colors import Style, supports_color
-from rps.game import Score, parse_command, play_round, resolve
+from rps.game import validate_moves
 from rps.graph import build_rule_graph
 from rps.rules import list_available_rules, load_rules
+from rps.session import run_pvp, run_pve, print_match_result
 
 
-def _read_pvp_move(prompt: str) -> str:
-    if sys.stdin.isatty() and sys.stdout.isatty():
-        return getpass(prompt)
-    return input(prompt)
-
-
-def _read_validated_move(
-    prompt: str, valid_moves: Set[str], quit_words: Set[str], style: Style
-) -> tuple[bool, Optional[str]]:
-    try:
-        raw = _read_pvp_move(prompt)
-    except EOFError:
-        return True, None
-    match parse_command(raw, valid_moves, quit_words):
-        case Success(None):
-            return True, None
-        case Success(move):
-            assert move is not None
-            return False, move
-        case Failure(msg):
-            print(style.red(msg))
-            return False, None
-
-
-def main() -> None:
-    possible_rules = list_available_rules()
-
+def _build_parser(possible_rules: list[str]) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Rock, Paper, Scissors, etc.",
         epilog=f"Possible rules sets: {', '.join(possible_rules)}",
@@ -57,7 +29,6 @@ def main() -> None:
         action="store_true",
         help="Disable colored output (also respects NO_COLOR env var)",
     )
-
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--pvp", action="store_true", help="Two-player hot-seat mode")
     mode.add_argument(
@@ -65,7 +36,7 @@ def main() -> None:
         default=None,
         metavar="NAME",
         help=f"Bot to play against (default: random). "
-             f"Available: {', '.join(sorted(BUILTIN_BOTS))}",
+        f"Available: {', '.join(sorted(BUILTIN_BOTS))}",
     )
     mode.add_argument(
         "--bot-file",
@@ -73,120 +44,50 @@ def main() -> None:
         metavar="PATH",
         help="Load a custom bot from a Python file",
     )
+    return parser
 
+
+def _build_bot(
+    parser: argparse.ArgumentParser, args: argparse.Namespace
+) -> Optional[Bot]:
+    if args.pvp:
+        return None
+    if args.bot_file:
+        try:
+            return load_bot_file(args.bot_file)
+        except ValueError as e:
+            parser.error(str(e))
+    name = args.bot or "random"
+    if name not in BUILTIN_BOTS:
+        parser.error(
+            f"unknown bot: {name!r}.available: {', '.join(sorted(BUILTIN_BOTS))}"
+        )
+    return BUILTIN_BOTS[name]
+
+
+def main() -> None:
+    possible_rules = list_available_rules()
+    parser = _build_parser(possible_rules)
     args = parser.parse_args()
 
     if args.first_to < 1:
         parser.error("--first-to must be at least 1")
 
     style = Style(enabled=supports_color() and not args.no_color)
+    bot = _build_bot(parser, args)
 
-    pvp = args.pvp
-    bot: Optional[Bot] = None
-    if not pvp:
-        if args.bot_file:
-            try:
-                bot = load_bot_file(args.bot_file)
-            except ValueError as e:
-                parser.error(str(e))
-        else:
-            name = args.bot or "random"
-            if name not in BUILTIN_BOTS:
-                parser.error(
-                    f"unknown bot: {name!r}. "
-                    f"available: {', '.join(sorted(BUILTIN_BOTS))}"
-                )
-            bot = BUILTIN_BOTS[name]
-
-    rules_dict = load_rules(args.rules)
-    rule_graph = build_rule_graph(rules_dict)
-    moves = rule_graph.all_moves()
-
-    if not moves:
-        raise ValueError(f"Rule set {args.rules!r} contains no moves")
-    if any(m != m.lower() for m in moves):
-        raise ValueError(
-            f"Rule set {args.rules!r} must use lowercase move names: {sorted(moves)}"
-        )
-
-    quit_words = {"q", "quit", "exit"}
-    match_mode = args.first_to > 1
-    score = Score()
-    history: list[Round] = []
-
-    if pvp:
-        outcome_lines = {
-            "win": style.green("Player 1 wins!"),
-            "lose": style.red("Player 2 wins!"),
-            "draw": style.yellow("Draw"),
-        }
-    else:
-        outcome_lines = {
-            "win": style.green("User wins!"),
-            "lose": style.red("User loses!"),
-            "draw": style.yellow("Draw"),
-        }
+    rule_graph = build_rule_graph(load_rules(args.rules))
+    validate_moves(rule_graph.all_moves(), args.rules)
 
     try:
-        while not score.is_over(args.first_to):
-            if pvp:
-                quit_, p1 = _read_validated_move(
-                    style.cyan("Player 1, your move: "), moves, quit_words, style
-                )
-                if quit_:
-                    break
-                if p1 is None:
-                    continue
-
-                quit_, p2 = _read_validated_move(
-                    style.cyan("Player 2, your move: "), moves, quit_words, style
-                )
-                if quit_:
-                    break
-                if p2 is None:
-                    continue
-
-                result = resolve(p1, p2, rule_graph)
-                score.record(result)
-                history.append((p1, p2))
-                print(f"Player 1: {style.cyan(p1)}")
-                print(f"Player 2: {style.cyan(p2)}")
-                print(outcome_lines[result])
-                if match_mode:
-                    print(style.dim(f"Score: {score}"))
-            else:
-                try:
-                    raw = input(style.cyan("Your move: "))
-                except EOFError:
-                    break
-
-                match parse_command(raw, moves, quit_words):
-                    case Success(None):
-                        break
-                    case Success(move):
-                        _, comp, result = play_round(
-                            rule_graph, move, bot, history
-                        )
-                        history.append((move, comp))
-                        score.record(result)
-                        print(f"Computer's move: {style.cyan(comp)}")
-                        print(outcome_lines[result])
-                        if match_mode:
-                            print(style.dim(f"Score: {score}"))
-                    case Failure(msg):
-                        print(style.red(msg))
-
+        if args.pvp:
+            score = run_pvp(rule_graph, args.first_to, style)
+            labels: tuple[str, str] = ("Player 1", "Player 2")
+        else:
+            assert bot is not None
+            score = run_pve(rule_graph, bot, args.first_to, style)
+            labels: tuple[str, str] = ("User", "Computer")
     except KeyboardInterrupt:
         sys.exit(130)
 
-    if match_mode and score.rounds_played() > 0:
-        print()
-        print(style.dim(f"Final score: {score}"))
-        if not score.is_over(args.first_to):
-            print(style.yellow("Match abandoned."))
-        elif score.user > score.comp:
-            label = "Player 1" if pvp else "User"
-            print(style.bold_green(f"{label} wins the match!"))
-        else:
-            label = "Player 2" if pvp else "Computer"
-            print(style.bold_red(f"{label} wins the match!"))
+    print_match_result(score, args.first_to, style, labels)

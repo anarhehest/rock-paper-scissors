@@ -1,10 +1,14 @@
 from dataclasses import dataclass
-from typing import Tuple, Set, Optional, Literal, Sequence
+from typing import Tuple, Set, Optional, Literal, Sequence, AbstractSet
 
 from returns.result import Failure, Result, Success
 
 from rps.graph import RuleGraph
-from rps.bots import Bot, Round
+from rps.bots import Bot
+
+Outcome = Literal["win", "lose", "draw"]
+WinSide = Literal["first", "second"]
+Round = tuple[str, str]
 
 
 def parse_command(
@@ -23,11 +27,20 @@ def parse_command(
 
 
 def resolve(
-    user: str, comp: str, rule_graph: RuleGraph
+    first: str, second: str, rule_graph: RuleGraph
 ) -> Literal["win", "lose", "draw"]:
-    if user == comp:
+    if first == second:
         return "draw"
-    return "win" if rule_graph.does_beat(user, comp) else "lose"
+    return "win" if rule_graph.does_beat(first, second) else "lose"
+
+
+def validate_moves(moves: AbstractSet[str], rules_name: str) -> None:
+    if not moves:
+        raise ValueError(f"Rule set {moves!r} contains no moves")
+    if any(m != m.lower() for m in moves):
+        raise ValueError(
+            f"Rule set {moves!r} must contains move names: {sorted(moves)}"
+        )
 
 
 def play_round(
@@ -44,24 +57,31 @@ def play_round(
 
 @dataclass
 class Score:
-    user: int = 0
-    comp: int = 0
+    first: int = 0
+    second: int = 0
     draws: int = 0
 
     def record(self, outcome: Literal["win", "lose", "draw"]) -> None:
         match outcome:
             case "win":
-                self.user += 1
+                self.first += 1
             case "lose":
-                self.comp += 1
+                self.second += 1
             case "draw":
                 self.draws += 1
 
     def is_over(self, target: int) -> bool:
-        return self.user >= target or self.comp >= target
+        return self.first >= target or self.second >= target
 
     def rounds_played(self) -> int:
-        return self.user + self.comp + self.draws
+        return self.first + self.second + self.draws
+
+    def winner(self, target: int) -> Optional[WinSide]:
+        if self.first >= target:
+            return "first"
+        if self.second >= target:
+            return "second"
+        return None
 
     def __str__(self):
-        return f"{self.user}-{self.comp} (draws: {self.draws})"
+        return f"{self.first}-{self.second} (draws: {self.draws})"

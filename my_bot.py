@@ -6,4 +6,5 @@ class MirrorBot:
             return rule_graph.get_random_move()
         return history[-1][0]
 
+
 BOT = MirrorBot()
