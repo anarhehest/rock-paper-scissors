@@ -7,7 +7,11 @@ authors = [
 ]
 requires-python = ">=3.13,<4.0"
 dependencies = [
-    "returns (>=0.30.0,<0.31.0)"
+    "returns (>=0.30.0,<0.31.0)",
+    "fastapi (>=0.163.1,<0.164.0)",
+    "uvicorn (>=0.54.0,<0.55.0)",
+    "jinja2 (>=3.1.6,<4.0.0)",
+    "python-multipart (>=0.0.34,<0.0.35)"
 ]
 
 [build-system]
@@ -16,6 +20,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project.scripts]
 rps = "rps.cli:main"
+rps-web = "rps.web.app:run"
 
 [tool.poetry]
 packages = [{ include = "rps", from = "src" }]

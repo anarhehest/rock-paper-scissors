@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RPS</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 640px;
+           margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+    h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
+    .meta { color: #888; font-size: 0.9rem; margin: 0 0 1rem; }
+    .score { font-size: 1.1rem; margin: 0.5rem 0 1rem; padding: 0.5rem 0.75rem;
+             border-radius: 6px; background: rgba(127,127,127,0.12); }
+    .last { padding: 0.75rem 1rem; border-radius: 6px;
+            background: rgba(100,150,255,0.12); margin-bottom: 1rem; }
+    .win { color: #0a7d2c; font-weight: 600; }
+    .lose { color: #b3261e; font-weight: 600; }
+    .draw { color: #8a6d00; font-weight: 600; }
+    form { margin: 0; }
+    .moves { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    button { padding: 0.5rem 0.9rem; border: 1px solid #888; background: transparent;
+             color: inherit; border-radius: 6px; cursor: pointer;
+             font-size: 1rem; font-family: inherit; }
+    button:hover { background: rgba(127,127,127,0.15); }
+    .settings { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #8884;
+                display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+    select { padding: 0.4rem; font-size: 0.95rem; }
+    .history { margin-top: 1.5rem; font-family: ui-monospace, monospace;
+               font-size: 0.9rem; color: #888; }
+    .history strong { font-family: system-ui, sans-serif; color: inherit; }
+  </style>
+</head>
+<body>
+  <h1>Rock, Paper, Scissors</h1>
+  <p class="meta">Rules: <strong>{{ game.rules_name }}</strong> · Bot: <strong>{{ game.bot_name }}</strong></p>
+  <p class="score">Score: <strong>{{ game.score }}</strong></p>
+
+  {% if last %}
+    <div class="last">
+      You played <strong>{{ last.user }}</strong>, computer played <strong>{{ last.comp }}</strong> →
+      {% if last.outcome == "win" %}<span class="win">You win!</span>
+      {% elif last.outcome == "lose" %}<span class="lose">Computer wins!</span>
+      {% else %}<span class="draw">Draw.</span>{% endif %}
+    </div>
+  {% endif %}
+
+  <form method="post" action="/play" class="moves">
+    {% for m in moves %}
+      <button type="submit" name="move" value="{{ m }}">{{ m }}</button>
+    {% endfor %}
+  </form>
+
+  <div class="settings">
+    <form method="post" action="/settings">
+      <label>Rules
+        <select name="rules">
+          {% for r in rules_options %}
+            <option value="{{ r }}" {% if r == game.rules_name %}selected{% endif %}>{{ r }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Bot
+        <select name="bot">
+          {% for b in bots_options %}
+            <option value="{{ b }}" {% if b == game.bot_name %}selected{% endif %}>{{ b }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button type="submit">Apply</button>
+    </form>
+    <form method="post" action="/reset">
+      <button type="submit">Reset</button>
+    </form>
+  </div>
+
+  {% if history %}
+    <div class="history">
+      <strong>Recent</strong>
+      {% for u, c in history %}<div>{{ u }} vs {{ c }}</div>{% endfor %}
+    </div>
+  {% endif %}
+</body>
+</html>
