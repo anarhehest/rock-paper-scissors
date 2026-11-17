@@ -1,7 +1,4 @@
-import os
-import sys
-
-from src.rps.colors import Style, supports_color
+from rps.colors import Style, supports_color
 
 
 def test_disabled_returns_plain():

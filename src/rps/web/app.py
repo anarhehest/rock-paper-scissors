@@ -1,7 +1,6 @@
 import random
 import secrets
 from pathlib import Path
-from sys import hash_info
 from typing import Optional
 
 from fastapi import FastAPI, Form, Request
@@ -56,6 +55,10 @@ class WebGame:
     def apply_settings(self, rules_name: str, bot_name: str) -> None:
         if rules_name == self.rules_name and bot_name == self.bot_name:
             return
+        if rules_name not in list_available_rules():
+            raise ValueError(f"unknown rule set: {rules_name!r}")
+        if bot_name not in BUILTIN_BOTS:
+            raise ValueError(f"unknown bot: {bot_name!r}")
         self.rules_name = rules_name
         self.bot_name = bot_name
         self._rebuild()
@@ -116,7 +119,7 @@ async def settings(
     if sid and sid in SESSIONS:
         try:
             SESSIONS[sid].apply_settings(rules, bot)
-        except (ValueError, KeyError):
+        except (ValueError, KeyError, FileNotFoundError):
             pass
     return RedirectResponse("/", status_code=303)
 

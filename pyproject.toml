@@ -1,17 +1,21 @@
 [project]
 name = "rock-paper-scissors"
 version = "0.1.0"
-description = "Rock-Paper-Scissors CLI with pluggable rule sets"
+description = "Rock-Paper-Scissors with pluggable rule sets"
 authors = [
-    {name = "anarhehest",email = "drevv5@icloud.com"}
+    {name = "anarhehest", email = "drevv5@icloud.com"}
 ]
 requires-python = ">=3.13,<4.0"
 dependencies = [
     "returns (>=0.30.0,<0.31.0)",
+]
+
+[project.optional-dependencies]
+web = [
     "fastapi (>=0.163.1,<0.164.0)",
     "uvicorn (>=0.54.0,<0.55.0)",
     "jinja2 (>=3.1.6,<4.0.0)",
-    "python-multipart (>=0.0.34,<0.0.35)"
+    "python-multipart (>=0.0.34,<0.0.35)",
 ]
 
 [build-system]
@@ -28,7 +32,8 @@ packages = [{ include = "rps", from = "src" }]
 [dependency-groups]
 dev = [
     "ruff (>=0.15.16,<0.16.0)",
-    "pytest (>=9.2.0,<10.0.0)"
+    "pytest (>=9.2.0,<10.0.0)",
+    "httpx2 (>=2.16.2,<3.0.0)",
 ]
 
 [tool.pytest.ini_options]

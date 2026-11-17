@@ -1,4 +1,3 @@
-import pytest
 from returns.result import Failure, Success
 
 from rps.game import Score, parse_command
