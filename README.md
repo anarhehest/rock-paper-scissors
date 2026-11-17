@@ -9,7 +9,25 @@ and pluggable bots.
 poetry install
 ```
 
-## Run
+## Run (web)
+```bash
+poetry run rps-web
+# → http://127.0.0.1:8000
+```
+
+For auto-reload during development:
+
+```bash
+poetry run uvicorn rps.web.app:app --reload
+```
+
+The web UI has the same rules, the same bots, and the same scoring as the
+CLI. Sessions are in-memory; restarting the server clears all games. Custom
+bots via `--bot-file` are CLI-only — uploading arbitrary Python through HTTP
+needs a sandbox, which is out of scope.
+
+
+## Run (СLI)
 
 ```bash
 poetry run rps classic
