@@ -36,7 +36,9 @@ class RuleGraph:
         return f"RuleGraph:({dict(self.graph)!r})"
 
 
-def build_rule_graph(rules_dict: Dict[str, List[str]], rng: Optional[random.Random] = None) -> RuleGraph:
+def build_rule_graph(
+    rules_dict: Dict[str, List[str]], rng: Optional[random.Random] = None
+) -> RuleGraph:
     graph = RuleGraph(rng=rng)
     for winner, losers in rules_dict.items():
         for loser in losers:

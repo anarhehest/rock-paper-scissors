@@ -21,8 +21,11 @@ DEFAULT_BOT = "random"
 app = FastAPI(title="RPS")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
+
 class WebGame:
-    def __init__(self, rules_name: str, bot_name: str, seed: Optional[int] = None) -> None:
+    def __init__(
+        self, rules_name: str, bot_name: str, seed: Optional[int] = None
+    ) -> None:
         self.rules_name = rules_name
         self.bot_name = bot_name
         self.rng = random.Random(seed)
@@ -83,7 +86,7 @@ async def index(request: Request) -> HTMLResponse:
             "bots_options": sorted(BUILTIN_BOTS.keys()),
             "history": list(reversed(game.history[-10:])),
             "last": game.last,
-        }
+        },
     )
     response.set_cookie(COOKIE, sid, httponly=True, samesite="lax")
     return response
@@ -106,7 +109,9 @@ async def reset(request: Request) -> RedirectResponse:
 
 
 @app.post("/settings")
-async def settings(request: Request, rules: str = Form(...), bot: str = Form(...)) -> RedirectResponse:
+async def settings(
+    request: Request, rules: str = Form(...), bot: str = Form(...)
+) -> RedirectResponse:
     sid = request.cookies.get(COOKIE)
     if sid and sid in SESSIONS:
         try:
@@ -118,4 +123,5 @@ async def settings(request: Request, rules: str = Form(...), bot: str = Form(...
 
 def run() -> None:
     import uvicorn
+
     uvicorn.run("rps.web.app:app", host="0.0.0.0", port=8000)
